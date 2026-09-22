@@ -1,0 +1,1589 @@
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cisco IOS parancs generátor</title>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --line: #dfe7f3;
+      --text: #1d2a39;
+      --muted: #56657a;
+      --primary: #244e8a;
+      --primary-soft: #eaf1ff;
+      --accent: #107c6a;
+      --danger: #b63a3a;
+      --shadow: 0 8px 22px rgba(15, 33, 55, 0.08);
+      --term-bg: #101826;
+      --term-text: #9be6b8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 24px;
+    }
+
+    .cover {
+      background: linear-gradient(135deg, var(--primary) 0%, #3a6db1 100%);
+      color: white;
+      border-radius: 18px;
+      padding: 24px 28px;
+      box-shadow: var(--shadow);
+      margin-bottom: 22px;
+    }
+
+    .cover h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.8rem, 2.5vw, 2.6rem);
+    }
+
+    .cover p {
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+    }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 1.15rem;
+      color: var(--primary);
+      border-bottom: 2px solid var(--primary-soft);
+      padding-bottom: 8px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin: 10px 0 6px;
+      color: var(--text);
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fbfcff;
+      font-size: 0.96rem;
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid var(--primary);
+      outline-offset: 1px;
+    }
+
+    input.invalid {
+      border-color: var(--danger);
+      background: #fff5f5;
+    }
+
+    .inline {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .hidden { display: none !important; }
+
+    .checkrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 12px 0 4px;
+    }
+
+    .checkrow input { width: auto; }
+    .checkrow label { margin: 0; font-weight: 600; }
+
+    .output-box {
+      width: 100%;
+      min-height: 110px;
+      margin-top: 8px;
+      background: var(--term-bg);
+      color: var(--term-text);
+      font-family: "Consolas", "Menlo", monospace;
+      font-size: 0.86rem;
+      border-radius: 10px;
+      border: 1px solid #0a1220;
+      padding: 12px;
+      white-space: pre;
+      resize: vertical;
+    }
+
+    #combined-output { min-height: 280px; }
+
+    .copy-btn {
+      margin-top: 8px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.86rem;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover { opacity: 0.9; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 0.82rem;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 6px 7px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: 0.76rem;
+      white-space: nowrap;
+    }
+
+    td input, td select {
+      padding: 5px 6px;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      min-width: 78px;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    .mini-btn {
+      padding: 4px 8px;
+      font-size: 0.74rem;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: #eef3fb;
+      color: var(--text);
+      cursor: pointer;
+      margin-right: 4px;
+      white-space: nowrap;
+    }
+
+    .mini-btn.danger-mini {
+      background: #fff0f0;
+      color: var(--danger);
+      border-color: #f3c4c4;
+    }
+
+    .add-row-btn {
+      margin-top: 8px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .status-ok { color: var(--accent); font-weight: 700; }
+    .status-warn { color: var(--danger); font-weight: 700; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 0.96rem;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .primary { background: var(--primary); color: white; }
+
+    .secondary {
+      background: #eef3fb;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .small {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 8px;
+      display: block;
+    }
+
+    .combined-card { margin-top: 20px; }
+
+    @media (max-width: 700px) {
+      .inline { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      .actions, .copy-btn, .add-row-btn, input, select { display: none !important; }
+      .output-box { border: 1px solid #999; color: #000; background: #fff; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="cover">
+      <h1>Cisco IOS parancs generátor</h1>
+      <p>Tervezd meg az IP kiosztást, majd add meg az eszköz, port, VLAN, routing és security adatokat – az oldal automatikusan kirakja a másolható CLI parancsokat.</p>
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Eszköz alapadatok</h2>
+
+        <label>Eszköz neve / hostname</label>
+        <input type="text" id="hostname" placeholder="pl. SW-CORE-01" />
+
+        <label>Eszköz típusa</label>
+        <select id="deviceType">
+          <option value="router">Router</option>
+          <option value="switch">Switch (L2)</option>
+          <option value="l3switch">L3 Switch (routing engedélyezve)</option>
+        </select>
+        <span class="small">A típus befolyásolja, hogy alapértelmezett átjáróként "ip default-gateway" vagy "ip route" parancs készül.</span>
+      </section>
+
+      <section class="card">
+        <h2>IP / VLSM tervező tábla</h2>
+
+        <div class="inline">
+          <div>
+            <label>Alap hálózat</label>
+            <input type="text" id="vlsmBase" value="192.168.0.0" />
+          </div>
+          <div>
+            <label>Alap prefix</label>
+            <select id="vlsmBasePrefix"></select>
+          </div>
+        </div>
+        <span class="small">Add meg az alhálózat nevét és a szükséges hosztok számát – a tábla a nagyobb alhálózatokat osztja ki előre (VLSM elv), így a lista sorrendjétől függetlenül nem marad kihasználatlan lyuk az alaphálózatban.</span>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Név</th><th>Hoszt</th><th>Hálózat</th><th>Pfx</th><th>Maszk</th>
+                <th>Első (GW)</th><th>Utolsó</th><th>Broadcast</th><th>#</th><th>Kiv. cím</th><th>Áll.</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="vlsmBody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="add-row-btn" id="vlsmAddRow">+ Sor hozzáadása</button>
+        <span class="small">A "#" oszlopba írható sorszám (pl. "5" = az 5. kiosztható cím a kliensnek) vagy "utolsó" (pl. a switch management IP-jéhez) – ez adja a "Kiv. cím" oszlopot. "→ IF" ezt a kiválasztott címet és a maszkot másolja az Interfész kártyába, "→ DHCP" a hálózatot és a gateway-t a DHCP kártyába.</span>
+      </section>
+
+      <section class="card">
+        <h2>Interfész alapkonfiguráció</h2>
+
+        <label>Interfész</label>
+        <input type="text" id="ifName" list="ifNames" placeholder="pl. GigabitEthernet0/0" />
+        <datalist id="ifNames">
+          <option value="GigabitEthernet0/0">
+          <option value="GigabitEthernet0/1">
+          <option value="GigabitEthernet0/2">
+          <option value="FastEthernet0/0">
+          <option value="FastEthernet0/1">
+          <option value="Serial0/0/0">
+          <option value="Serial0/1/0">
+          <option value="Loopback0">
+          <option value="Vlan1">
+          <option value="Vlan10">
+        </datalist>
+
+        <label>Leírás (description)</label>
+        <input type="text" id="ifDesc" placeholder="pl. LAN kapcsolat / WAN link" />
+
+        <div id="ifSubFields" class="hidden">
+          <label>VLAN ID (encapsulation dot1Q) – router-on-a-stick subinterfészhez</label>
+          <input type="text" id="ifVlanId" placeholder="pl. 10 (ha üres, a .10 végződésből olvassuk ki)" />
+        </div>
+
+        <div class="inline">
+          <div>
+            <label>IP cím</label>
+            <input type="text" id="ifIp" placeholder="192.168.10.1" />
+          </div>
+          <div>
+            <label>Maszk</label>
+            <select id="ifMaskSel"></select>
+          </div>
+        </div>
+
+        <div class="checkrow">
+          <input type="checkbox" id="ifNoShut" checked />
+          <label for="ifNoShut">Port bekapcsolása (no shutdown)</label>
+        </div>
+        <span class="small">Ha az interfész nevében pont szerepel (pl. GigabitEthernet0/0.10), a szerkesztő automatikusan subinterfészként kezeli és beszúrja az "encapsulation dot1Q" sort.</span>
+
+        <textarea class="output-box" id="out-iface" readonly></textarea>
+        <button class="copy-btn" onclick="copyFrom('out-iface', this)">Másolás</button>
+      </section>
+
+      <section class="card">
+        <h2>Switchport / VLAN beállítás</h2>
+
+        <label>Port(ok)</label>
+        <input type="text" id="spPorts" list="spPortNames" placeholder="pl. FastEthernet0/1-4 vagy Gi0/1" />
+        <datalist id="spPortNames">
+          <option value="FastEthernet0/1">
+          <option value="FastEthernet0/1-4">
+          <option value="GigabitEthernet0/1">
+          <option value="GigabitEthernet0/1-2">
+        </datalist>
+
+        <label>Mód</label>
+        <select id="spMode">
+          <option value="access">Access</option>
+          <option value="trunk">Trunk</option>
+        </select>
+
+        <div id="spAccessFields">
+          <label>VLAN szám (access)</label>
+          <input type="text" id="spVlanAccess" placeholder="10" />
+          <label>VLAN neve (opcionális, ha új VLAN-t is létre kell hozni)</label>
+          <input type="text" id="spVlanName" placeholder="pl. Admin" />
+
+          <div class="checkrow">
+            <input type="checkbox" id="spPortSecurity" />
+            <label for="spPortSecurity">Port security engedélyezése</label>
+          </div>
+          <div id="spPortSecurityFields" class="hidden">
+            <label>Max MAC címek száma</label>
+            <input type="text" id="spPsMax" placeholder="2" />
+            <label>Violation mode</label>
+            <select id="spPsViolation">
+              <option value="shutdown">shutdown</option>
+              <option value="restrict">restrict</option>
+              <option value="protect">protect</option>
+            </select>
+            <div class="checkrow">
+              <input type="checkbox" id="spPsSticky" checked />
+              <label for="spPsSticky">Sticky MAC (mac-address sticky)</label>
+            </div>
+          </div>
+        </div>
+
+        <div id="spTrunkFields" class="hidden">
+          <label>Engedélyezett VLAN-ok (trunk)</label>
+          <input type="text" id="spTrunkAllowed" placeholder="pl. 10,20,30" />
+          <label>Native VLAN</label>
+          <input type="text" id="spTrunkNative" placeholder="99" />
+        </div>
+
+        <textarea class="output-box" id="out-switchport" readonly></textarea>
+        <button class="copy-btn" onclick="copyFrom('out-switchport', this)">Másolás</button>
+      </section>
+
+      <section class="card">
+        <h2>EtherChannel</h2>
+
+        <div class="inline">
+          <div>
+            <label>Port-channel szám</label>
+            <input type="text" id="poNum" placeholder="1" />
+          </div>
+          <div>
+            <label>Mód / protokoll</label>
+            <select id="poMode">
+              <option value="active">LACP – active</option>
+              <option value="passive">LACP – passive</option>
+              <option value="desirable">PAgP – desirable</option>
+              <option value="auto">PAgP – auto</option>
+              <option value="on">On (statikus)</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Tagportok</label>
+        <input type="text" id="poPorts" placeholder="pl. FastEthernet0/1-2" />
+
+        <label>Port-channel switchport módja</label>
+        <select id="poSwitchMode">
+          <option value="access">Access</option>
+          <option value="trunk">Trunk</option>
+        </select>
+
+        <div id="poAccessFields">
+          <label>VLAN szám</label>
+          <input type="text" id="poVlan" placeholder="10" />
+        </div>
+        <div id="poTrunkFields" class="hidden">
+          <label>Engedélyezett VLAN-ok</label>
+          <input type="text" id="poTrunkAllowed" placeholder="10,20,30" />
+        </div>
+
+        <textarea class="output-box" id="out-etherchannel" readonly></textarea>
+        <button class="copy-btn" onclick="copyFrom('out-etherchannel', this)">Másolás</button>
+      </section>
+
+      <section class="card">
+        <h2>STP (Spanning Tree)</h2>
+
+        <label>Mód</label>
+        <select id="stpMode">
+          <option value="">— nincs —</option>
+          <option value="pvst">PVST</option>
+          <option value="rapid-pvst">Rapid PVST+</option>
+        </select>
+
+        <label>VLAN-ok (vesszővel elválasztva)</label>
+        <input type="text" id="stpVlans" placeholder="pl. 1,10,20" />
+
+        <label>Szerep</label>
+        <select id="stpRole">
+          <option value="">— nincs —</option>
+          <option value="primary">Root primary</option>
+          <option value="secondary">Root secondary</option>
+          <option value="priority">Egyedi priority érték</option>
+        </select>
+
+        <div id="stpPriorityField" class="hidden">
+          <label>Priority érték</label>
+          <input type="text" id="stpPriorityValue" placeholder="pl. 4096" />
+        </div>
+
+        <label>Portfast / BPDU guard portok (opcionális)</label>
+        <input type="text" id="stpPorts" placeholder="pl. FastEthernet0/1-4" />
+        <div class="checkrow">
+          <input type="checkbox" id="stpPortfast" />
+          <label for="stpPortfast">spanning-tree portfast</label>
+        </div>
+        <div class="checkrow">
+          <input type="checkbox" id="stpBpduGuard" />
+          <label for="stpBpduGuard">spanning-tree bpduguard enable</label>
+        </div>
+
+        <textarea class="output-box" id="out-stp" readonly></textarea>
+        <button class="copy-btn" onclick="copyFrom('out-stp', this)">Másolás</button>
+      </section>
+
+      <section class="card">
+        <h2>Alapértelmezett átjáró / statikus útvonal</h2>
+
+        <div id="routeFieldsSwitch">
+          <label>Alapértelmezett átjáró IP (ip default-gateway)</label>
+          <input type="text" id="swGateway" placeholder="192.168.10.1" />
+        </div>
+
+        <div id="routeFieldsRouter" class="hidden">
+          <div class="checkrow">
+            <input type="checkbox" id="rtDefault" />
+            <label for="rtDefault">Ez legyen az alapértelmezett útvonal (0.0.0.0/0)</label>
+          </div>
+
+          <div id="rtDestFields">
+            <div class="inline">
+              <div>
+                <label>Cél hálózat</label>
+                <input type="text" id="rtDest" placeholder="10.20.0.0" />
+              </div>
+              <div>
+                <label>Maszk</label>
+                <select id="rtMaskSel"></select>
+              </div>
+            </div>
+          </div>
+
+          <label>Next-hop IP (vagy kimenő interfész)</label>
+          <input type="text" id="rtNextHop" placeholder="192.168.1.2" />
+        </div>
+
+        <textarea class="output-box" id="out-route" readonly></textarea>
+        <button class="copy-btn" onclick="copyFrom('out-route', this)">Másolás</button>
+      </section>
+
+      <section class="card">
+        <h2>OSPF</h2>
+
+        <div class="inline">
+          <div>
+            <label>Process ID</label>
+            <input type="text" id="ospfProcessId" placeholder="10" />
+          </div>
+          <div>
+            <label>Router-ID (opcionális)</label>
+            <input type="text" id="ospfRouterId" placeholder="1.1.1.1" />
+          </div>
+        </div>
+
+        <label>"show ip route" kimenet beillesztése (connected hálózatok kinyeréséhez)</label>
+        <textarea id="ospfRouteText" rows="4" placeholder="C   192.168.30.48/29 is directly connected, GigabitEthernet0/0/0"></textarea>
+        <button type="button" class="add-row-btn" id="ospfParseRoute">Hálózatok kinyerése a szövegből</button>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Hálózat</th><th>Prefix</th><th>Area</th><th></th></tr></thead>
+            <tbody id="ospfBody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="add-row-btn" id="ospfAddRow">+ Network sor</button>
+
+        <div class="checkrow">
+          <input type="checkbox" id="ospfPassiveDefault" />
+          <label for="ospfPassiveDefault">passive-interface default</label>
+        </div>
+        <label>Aktív interfészek (kivételek, vesszővel elválasztva)</label>
+        <input type="text" id="ospfActiveIfaces" placeholder="GigabitEthernet0/0, Serial0/0/0" />
+
+        <label>Interfész finomhangolás (opcionális)</label>
+        <div class="inline">
+          <div>
+            <label>Interfész</label>
+            <input type="text" id="ospfTuneIface" placeholder="GigabitEthernet0/0" />
+          </div>
+          <div>
+            <label>Priority (DR/BDR, 0 = soha nem DR)</label>
+            <input type="text" id="ospfPriority" placeholder="pl. 200" />
+          </div>
+        </div>
+        <label>Cost</label>
+        <input type="text" id="ospfCost" placeholder="pl. 50" />
+
+        <textarea class="output-box" id="out-ospf" readonly></textarea>
+        <button class="copy-btn" onclick="copyFrom('out-ospf', this)">Másolás</button>
+      </section>
+
+      <section class="card">
+        <h2>FHRP (HSRP / VRRP / GLBP)</h2>
+
+        <div class="inline">
+          <div>
+            <label>Protokoll</label>
+            <select id="fhrpProto">
+              <option value="standby">HSRP</option>
+              <option value="vrrp">VRRP</option>
+              <option value="glbp">GLBP</option>
+            </select>
+          </div>
+          <div>
+            <label>Interfész</label>
+            <input type="text" id="fhrpIface" placeholder="GigabitEthernet0/0" />
+          </div>
+        </div>
+
+        <div class="inline">
+          <div>
+            <label>Group szám</label>
+            <input type="text" id="fhrpGroup" placeholder="1" />
+          </div>
+          <div>
+            <label>Virtuális IP</label>
+            <input type="text" id="fhrpVip" placeholder="192.168.10.254" />
+          </div>
+        </div>
+
+        <label>Prioritás (opcionális)</label>
+        <input type="text" id="fhrpPriority" placeholder="110" />
+
+        <div class="checkrow">
+          <input type="checkbox" id="fhrpPreempt" />
+          <label for="fhrpPreempt">preempt</label>
+        </div>
+
+        <textarea class="output-box" id="out-fhrp" readonly></textarea>
+        <button class="copy-btn" onclick="copyFrom('out-fhrp', this)">Másolás</button>
+      </section>
+
+      <section class="card">
+        <h2>DHCP pool generátor</h2>
+
+        <label>Pool neve</label>
+        <input type="text" id="dhcpName" placeholder="LAN_POOL" />
+
+        <div class="inline">
+          <div>
+            <label>Hálózat</label>
+            <input type="text" id="dhcpNet" placeholder="192.168.10.0" />
+          </div>
+          <div>
+            <label>Maszk</label>
+            <select id="dhcpMaskSel"></select>
+          </div>
+        </div>
+
+        <label>Alapértelmezett átjáró (default-router)</label>
+        <input type="text" id="dhcpGw" placeholder="192.168.10.1" />
+
+        <label>DNS szerverek (vesszővel elválasztva)</label>
+        <input type="text" id="dhcpDns" placeholder="8.8.8.8, 1.1.1.1" />
+
+        <label>Kizárt cím tartomány (opcionális)</label>
+        <div class="inline">
+          <input type="text" id="dhcpExcludeStart" placeholder="192.168.10.1" />
+          <input type="text" id="dhcpExcludeEnd" placeholder="192.168.10.20" />
+        </div>
+
+        <label>DHCP relé (opcionális, ha a DHCP szerver másik alhálózaton van)</label>
+        <div class="inline">
+          <div>
+            <label>Kliens oldali interfész</label>
+            <input type="text" id="dhcpRelayIface" placeholder="GigabitEthernet0/0.10" />
+          </div>
+          <div>
+            <label>DHCP szerver IP</label>
+            <input type="text" id="dhcpRelayServer" placeholder="192.168.1.10" />
+          </div>
+        </div>
+
+        <textarea class="output-box" id="out-dhcp" readonly></textarea>
+        <button class="copy-btn" onclick="copyFrom('out-dhcp', this)">Másolás</button>
+      </section>
+
+      <section class="card">
+        <h2>ACL generátor</h2>
+
+        <div class="inline">
+          <div>
+            <label>Típus</label>
+            <select id="aclType">
+              <option value="standard">Standard</option>
+              <option value="extended">Extended</option>
+            </select>
+          </div>
+          <div>
+            <label>ACL szám / név</label>
+            <input type="text" id="aclId" placeholder="pl. 10 vagy 101" />
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Akció</th><th>Proto</th><th>Forrás</th><th>Forrás mask</th><th>Cél</th><th>Cél mask</th><th>Port</th><th></th></tr>
+            </thead>
+            <tbody id="aclBody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="add-row-btn" id="aclAddRow">+ Szabály hozzáadása</button>
+        <span class="small">Forrás/cél mezőbe írható "any" is. Standard típusnál csak a forrás és az akció számít.</span>
+
+        <label>Alkalmazás interfészre (opcionális)</label>
+        <div class="inline">
+          <div>
+            <label>Interfész</label>
+            <input type="text" id="aclApplyIface" placeholder="GigabitEthernet0/0" />
+          </div>
+          <div>
+            <label>Irány</label>
+            <select id="aclApplyDir">
+              <option value="in">in</option>
+              <option value="out">out</option>
+            </select>
+          </div>
+        </div>
+
+        <textarea class="output-box" id="out-acl" readonly></textarea>
+        <button class="copy-btn" onclick="copyFrom('out-acl', this)">Másolás</button>
+      </section>
+
+      <section class="card">
+        <h2>NAT (PAT / Static)</h2>
+
+        <label>Típus</label>
+        <select id="natType">
+          <option value="pat">PAT (overload)</option>
+          <option value="static">Static NAT</option>
+        </select>
+
+        <label>Belső (inside) interfész(ek) – vesszővel elválasztva</label>
+        <input type="text" id="natInsideIfaces" placeholder="GigabitEthernet0/1, Vlan10" />
+
+        <label>Külső (outside) interfész</label>
+        <input type="text" id="natOutsideIface" placeholder="GigabitEthernet0/0" />
+
+        <div id="natPatFields">
+          <label>Forrás ACL szám (a belső hálózatot engedélyező standard ACL)</label>
+          <input type="text" id="natAcl" placeholder="1" />
+        </div>
+
+        <div id="natStaticFields" class="hidden">
+          <label>Belső lokális IP</label>
+          <input type="text" id="natLocal" placeholder="192.168.10.10" />
+          <label>Belső globális (nyilvános) IP</label>
+          <input type="text" id="natGlobal" placeholder="203.0.113.10" />
+        </div>
+
+        <textarea class="output-box" id="out-nat" readonly></textarea>
+        <button class="copy-btn" onclick="copyFrom('out-nat', this)">Másolás</button>
+      </section>
+
+      <section class="card">
+        <h2>SSH / AAA alapbeállítás</h2>
+
+        <label>Domain név (crypto key generáláshoz)</label>
+        <input type="text" id="secDomain" placeholder="suli.local" />
+
+        <label>Enable secret</label>
+        <input type="text" id="secEnable" placeholder="cisco123" />
+
+        <div class="inline">
+          <div>
+            <label>Helyi felhasználó</label>
+            <input type="text" id="secUser" placeholder="admin" />
+          </div>
+          <div>
+            <label>Jelszó</label>
+            <input type="text" id="secPass" placeholder="cisco123" />
+          </div>
+        </div>
+
+        <div class="checkrow">
+          <input type="checkbox" id="secSshOnly" checked />
+          <label for="secSshOnly">Csak SSH engedélyezése a VTY vonalakon (transport input ssh)</label>
+        </div>
+
+        <textarea class="output-box" id="out-sec" readonly></textarea>
+        <button class="copy-btn" onclick="copyFrom('out-sec', this)">Másolás</button>
+      </section>
+    </div>
+
+    <section class="card combined-card">
+      <h2>Teljes konfiguráció (összesítve)</h2>
+      <span class="small">Az "Eszköz típusa" mezőnek megfelelően szűrve: Router esetén a switch-specifikus blokkok (Switchport/VLAN, EtherChannel, STP), Switch (L2) esetén a routing-specifikus blokkok (OSPF, FHRP, DHCP pool, NAT) kimaradnak az összesítésből – az egyes kártyák saját "Másolás" gombjával továbbra is elérhetők.</span>
+      <div class="checkrow">
+        <input type="checkbox" id="wrMem" />
+        <label for="wrMem">"write memory" (copy run start) hozzáadása a végére</label>
+      </div>
+      <textarea class="output-box" id="combined-output" readonly></textarea>
+      <button class="copy-btn" onclick="copyFrom('combined-output', this)">Összes másolása</button>
+    </section>
+
+    <div class="actions">
+      <button class="primary" onclick="window.print()">Nyomtatás</button>
+      <button class="secondary" id="resetBtn">Mezők törlése</button>
+    </div>
+    <span class="small">A parancsok kitöltés közben automatikusan frissülnek. Csak a kitöltött mezőkhöz tartozó sorok jelennek meg. Az IP/VLSM tábla önmagában tervezési segédlet, nem kerül be a parancsok közé.</span>
+  </div>
+
+  <script>
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function cidrToMask(prefix) {
+      prefix = Number(prefix);
+      if (prefix <= 0) return '0.0.0.0';
+      const full = (0xffffffff << (32 - prefix)) >>> 0;
+      return [(full >>> 24) & 255, (full >>> 16) & 255, (full >>> 8) & 255, full & 255].join('.');
+    }
+
+    function cidrToWildcard(prefix) {
+      return cidrToMask(prefix).split('.').map(o => 255 - Number(o)).join('.');
+    }
+
+    function ipToInt(ip) {
+      const p = ip.split('.').map(Number);
+      return ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]) >>> 0;
+    }
+
+    function intToIp(n) {
+      return [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join('.');
+    }
+
+    function neededPrefix(hosts) {
+      hosts = Math.max(0, Math.floor(hosts));
+      if (hosts <= 0) return 32;
+      const bits = Math.min(32, Math.max(0, Math.ceil(Math.log2(hosts + 2))));
+      return 32 - bits;
+    }
+
+    function buildMaskOptions(selectEl, min, max, defaultPrefix) {
+      selectEl.innerHTML = '';
+      for (let p = min; p <= max; p++) {
+        const opt = document.createElement('option');
+        opt.value = String(p);
+        opt.textContent = '/' + p + ' — ' + cidrToMask(p);
+        if (p === defaultPrefix) opt.selected = true;
+        selectEl.appendChild(opt);
+      }
+    }
+
+    function buildWildcardOptions(selectEl, min, max, defaultPrefix) {
+      selectEl.innerHTML = '';
+      for (let p = min; p <= max; p++) {
+        const opt = document.createElement('option');
+        opt.value = String(p);
+        opt.textContent = '/' + p + ' — wc ' + cidrToWildcard(p);
+        if (p === defaultPrefix) opt.selected = true;
+        selectEl.appendChild(opt);
+      }
+    }
+
+    function val(id) {
+      const el = document.getElementById(id);
+      return el ? el.value.trim() : '';
+    }
+
+    function checked(id) {
+      const el = document.getElementById(id);
+      return el ? el.checked : false;
+    }
+
+    function isValidIp(ip) {
+      return /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && ip.split('.').every(o => Number(o) >= 0 && Number(o) <= 255);
+    }
+
+    function markValidity(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const v = el.value.trim();
+      el.classList.toggle('invalid', v.length > 0 && !isValidIp(v));
+    }
+
+    /* ---------- VLSM tervező tábla ---------- */
+
+    function addVlsmRow(name, hosts) {
+      const tbody = document.getElementById('vlsmBody');
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><input type="text" class="vlsm-name" value="' + escapeHtml(name || '') + '"></td>' +
+        '<td><input type="number" min="0" class="vlsm-hosts" value="' + (hosts || '') + '"></td>' +
+        '<td class="vlsm-network">–</td><td class="vlsm-prefix">–</td><td class="vlsm-mask">–</td>' +
+        '<td class="vlsm-first">–</td><td class="vlsm-last">–</td><td class="vlsm-broadcast">–</td>' +
+        '<td><input type="text" class="vlsm-index" placeholder="pl. 5 / utolsó"></td>' +
+        '<td class="vlsm-selected">–</td>' +
+        '<td class="vlsm-status">–</td>' +
+        '<td><button type="button" class="mini-btn" data-act="if">→ IF</button>' +
+        '<button type="button" class="mini-btn" data-act="dhcp">→ DHCP</button>' +
+        '<button type="button" class="mini-btn danger-mini" data-act="del">✕</button></td>';
+      tbody.appendChild(tr);
+      recalcVlsm();
+    }
+
+    function setVlsmRowEmpty(tr) {
+      ['vlsm-network', 'vlsm-prefix', 'vlsm-mask', 'vlsm-first', 'vlsm-last', 'vlsm-broadcast', 'vlsm-selected'].forEach(c => {
+        tr.querySelector('.' + c).textContent = '–';
+      });
+      const st = tr.querySelector('.vlsm-status');
+      st.textContent = '–';
+      st.className = 'vlsm-status';
+      delete tr.dataset.network;
+      delete tr.dataset.prefix;
+      delete tr.dataset.first;
+      delete tr.dataset.selected;
+    }
+
+    function recalcVlsm() {
+      const base = val('vlsmBase');
+      const basePrefix = Number(val('vlsmBasePrefix')) || 24;
+      const rows = Array.from(document.querySelectorAll('#vlsmBody tr'));
+
+      if (!isValidIp(base)) {
+        rows.forEach(setVlsmRowEmpty);
+        updateAll();
+        return;
+      }
+
+      const baseInt = ipToInt(base);
+      const poolEnd = baseInt + Math.pow(2, 32 - basePrefix);
+
+      const entries = rows.map(tr => ({ tr, hosts: Number(tr.querySelector('.vlsm-hosts').value) || 0 }));
+      entries.filter(e => e.hosts <= 0).forEach(e => setVlsmRowEmpty(e.tr));
+
+      // a nagyobb alhálózatokat előre kiosztjuk, hogy az igazítás (alignment) ne
+      // hagyjon kihasználatlan lyukakat a bázishálózatban a sorrendtől függetlenül
+      const active = entries
+        .filter(e => e.hosts > 0)
+        .map(e => {
+          const prefix = neededPrefix(e.hosts);
+          return { tr: e.tr, prefix, blockSize: Math.pow(2, 32 - prefix) };
+        })
+        .sort((a, b) => b.blockSize - a.blockSize);
+
+      let cursor = baseInt;
+      active.forEach(({ tr, prefix, blockSize }) => {
+        const network = Math.ceil(cursor / blockSize) * blockSize;
+        const broadcast = network + blockSize - 1;
+        let first, last;
+        if (prefix >= 32) { first = network; last = network; }
+        else if (prefix === 31) { first = network; last = network + 1; }
+        else { first = network + 1; last = broadcast - 1; }
+
+        tr.dataset.network = intToIp(network);
+        tr.dataset.prefix = String(prefix);
+        tr.dataset.first = intToIp(first);
+
+        tr.querySelector('.vlsm-network').textContent = intToIp(network);
+        tr.querySelector('.vlsm-prefix').textContent = '/' + prefix;
+        tr.querySelector('.vlsm-mask').textContent = cidrToMask(prefix);
+        tr.querySelector('.vlsm-first').textContent = intToIp(first);
+        tr.querySelector('.vlsm-last').textContent = intToIp(last);
+        tr.querySelector('.vlsm-broadcast').textContent = intToIp(broadcast);
+
+        const idxRaw = tr.querySelector('.vlsm-index').value.trim();
+        let selected = first;
+        let selectedWarn = false;
+        if (idxRaw) {
+          const lower = idxRaw.toLowerCase();
+          if (lower === 'utolsó' || lower === 'utolso' || lower === 'last') {
+            selected = last;
+          } else {
+            const n = parseInt(idxRaw, 10);
+            if (!isNaN(n) && n >= 1 && prefix < 31) {
+              selected = first + (n - 1);
+              if (selected > last) { selected = last; selectedWarn = true; }
+            }
+          }
+        }
+        tr.dataset.selected = intToIp(selected);
+        const selEl = tr.querySelector('.vlsm-selected');
+        selEl.textContent = intToIp(selected) + (selectedWarn ? ' ⚠' : '');
+        selEl.title = selectedWarn ? 'A megadott sorszám túl nagy, az utolsó használható címet mutatja.' : '';
+
+        const statusEl = tr.querySelector('.vlsm-status');
+        if (broadcast >= poolEnd) {
+          statusEl.textContent = '⚠';
+          statusEl.className = 'vlsm-status status-warn';
+          statusEl.title = 'Nincs elég hely az alaphálózatban';
+        } else {
+          statusEl.textContent = 'OK';
+          statusEl.className = 'vlsm-status status-ok';
+          statusEl.title = '';
+        }
+
+        cursor = network + blockSize;
+      });
+
+      updateAll();
+    }
+
+    /* ---------- OSPF dinamikus sorok ---------- */
+
+    function addOspfRow(net, prefix, area) {
+      const tbody = document.getElementById('ospfBody');
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><input type="text" class="ospf-net" placeholder="10.0.0.0" value="' + escapeHtml(net || '') + '"></td>' +
+        '<td><select class="ospf-prefix"></select></td>' +
+        '<td><input type="text" class="ospf-area" placeholder="0" value="' + escapeHtml(area !== undefined ? area : '0') + '"></td>' +
+        '<td><button type="button" class="mini-btn danger-mini" data-act="del">✕</button></td>';
+      tbody.appendChild(tr);
+      buildMaskOptions(tr.querySelector('.ospf-prefix'), 1, 32, prefix || 24);
+      updateAll();
+    }
+
+    function parseOspfConnected() {
+      const text = val('ospfRouteText');
+      if (!text) return;
+      const regex = /^\s*C\s+(\d{1,3}(?:\.\d{1,3}){3})\/(\d{1,2})\s+is directly connected/gim;
+      let match;
+      let count = 0;
+      while ((match = regex.exec(text)) !== null) {
+        addOspfRow(match[1], Number(match[2]), '0');
+        count++;
+      }
+      if (count === 0) {
+        alert('Nem találtam "C <hálózat>/<prefix> is directly connected" formátumú sort a beillesztett szövegben.');
+      }
+    }
+
+    /* ---------- ACL dinamikus sorok ---------- */
+
+    function addAclRow(opts) {
+      opts = opts || {};
+      const tbody = document.getElementById('aclBody');
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><select class="acl-action"><option value="permit">permit</option><option value="deny">deny</option></select></td>' +
+        '<td><select class="acl-proto"><option value="ip">ip</option><option value="tcp">tcp</option><option value="udp">udp</option><option value="icmp">icmp</option></select></td>' +
+        '<td><input type="text" class="acl-src" placeholder="any / 192.168.10.0" value="' + escapeHtml(opts.src || '') + '"></td>' +
+        '<td><select class="acl-src-mask"></select></td>' +
+        '<td><input type="text" class="acl-dst" placeholder="any / 10.0.0.5" value="' + escapeHtml(opts.dst || '') + '"></td>' +
+        '<td><select class="acl-dst-mask"></select></td>' +
+        '<td><input type="text" class="acl-port" placeholder="80" value="' + escapeHtml(opts.port || '') + '"></td>' +
+        '<td><button type="button" class="mini-btn danger-mini" data-act="del">✕</button></td>';
+      tbody.appendChild(tr);
+      if (opts.action) tr.querySelector('.acl-action').value = opts.action;
+      if (opts.proto) tr.querySelector('.acl-proto').value = opts.proto;
+      buildWildcardOptions(tr.querySelector('.acl-src-mask'), 1, 32, opts.srcPrefix || 24);
+      buildWildcardOptions(tr.querySelector('.acl-dst-mask'), 1, 32, opts.dstPrefix || 24);
+      updateAll();
+    }
+
+    /* ---------- generátor függvények ---------- */
+
+    function genIface() {
+      const name = val('ifName');
+      if (!name) return '';
+      const desc = val('ifDesc');
+      const ip = val('ifIp');
+      const mask = cidrToMask(val('ifMaskSel'));
+      const lines = ['interface ' + name];
+      if (desc) lines.push(' description ' + desc);
+      if (name.includes('.')) {
+        const vlanId = val('ifVlanId') || name.split('.').pop();
+        if (vlanId) lines.push(' encapsulation dot1Q ' + vlanId);
+      }
+      if (ip && isValidIp(ip)) lines.push(' ip address ' + ip + ' ' + mask);
+      lines.push(checked('ifNoShut') ? ' no shutdown' : ' shutdown');
+      lines.push('exit');
+      return lines.join('\n');
+    }
+
+    function genSwitchport() {
+      const ports = val('spPorts');
+      const mode = val('spMode');
+      const vlanAccess = val('spVlanAccess');
+      const vlanName = val('spVlanName');
+      const trunkAllowed = val('spTrunkAllowed');
+      const trunkNative = val('spTrunkNative');
+      const lines = [];
+
+      if (vlanAccess && vlanName) {
+        lines.push('vlan ' + vlanAccess);
+        lines.push(' name ' + vlanName);
+        lines.push('exit');
+      }
+
+      if (ports) {
+        lines.push((/[-,]/.test(ports) ? 'interface range ' : 'interface ') + ports);
+        if (mode === 'access') {
+          lines.push(' switchport mode access');
+          if (vlanAccess) lines.push(' switchport access vlan ' + vlanAccess);
+          if (checked('spPortSecurity')) {
+            lines.push(' switchport port-security');
+            const max = val('spPsMax');
+            if (max) lines.push(' switchport port-security maximum ' + max);
+            if (checked('spPsSticky')) lines.push(' switchport port-security mac-address sticky');
+            lines.push(' switchport port-security violation ' + val('spPsViolation'));
+          }
+        } else {
+          lines.push(' switchport trunk encapsulation dot1q');
+          lines.push(' switchport mode trunk');
+          if (trunkAllowed) lines.push(' switchport trunk allowed vlan ' + trunkAllowed);
+          if (trunkNative) lines.push(' switchport trunk native vlan ' + trunkNative);
+        }
+        lines.push('exit');
+      }
+
+      return lines.join('\n');
+    }
+
+    function genEtherchannel() {
+      const num = val('poNum');
+      const ports = val('poPorts');
+      if (!num || !ports) return '';
+      const lines = [(/[-,]/.test(ports) ? 'interface range ' : 'interface ') + ports];
+      lines.push(' channel-group ' + num + ' mode ' + val('poMode'));
+      lines.push('exit');
+      lines.push('interface Port-channel' + num);
+      if (val('poSwitchMode') === 'access') {
+        lines.push(' switchport mode access');
+        const vlan = val('poVlan');
+        if (vlan) lines.push(' switchport access vlan ' + vlan);
+      } else {
+        lines.push(' switchport trunk encapsulation dot1q');
+        lines.push(' switchport mode trunk');
+        const allowed = val('poTrunkAllowed');
+        if (allowed) lines.push(' switchport trunk allowed vlan ' + allowed);
+      }
+      lines.push('exit');
+      return lines.join('\n');
+    }
+
+    function genStp() {
+      const mode = val('stpMode');
+      const vlans = val('stpVlans');
+      const role = val('stpRole');
+      const priorityVal = val('stpPriorityValue');
+      const lines = [];
+
+      if (mode) lines.push('spanning-tree mode ' + mode);
+
+      if (vlans) {
+        if (role === 'primary') lines.push('spanning-tree vlan ' + vlans + ' root primary');
+        else if (role === 'secondary') lines.push('spanning-tree vlan ' + vlans + ' root secondary');
+        else if (role === 'priority' && priorityVal) lines.push('spanning-tree vlan ' + vlans + ' priority ' + priorityVal);
+      }
+
+      const ports = val('stpPorts');
+      if (ports && (checked('stpPortfast') || checked('stpBpduGuard'))) {
+        lines.push((/[-,]/.test(ports) ? 'interface range ' : 'interface ') + ports);
+        if (checked('stpPortfast')) lines.push(' spanning-tree portfast');
+        if (checked('stpBpduGuard')) lines.push(' spanning-tree bpduguard enable');
+        lines.push('exit');
+      }
+
+      return lines.join('\n');
+    }
+
+    function genRoute() {
+      const deviceType = val('deviceType');
+      const lines = [];
+
+      if (deviceType === 'switch') {
+        const gw = val('swGateway');
+        if (gw && isValidIp(gw)) lines.push('ip default-gateway ' + gw);
+        return lines.join('\n');
+      }
+
+      if (deviceType === 'l3switch') lines.push('ip routing');
+
+      const nextHop = val('rtNextHop');
+      if (checked('rtDefault')) {
+        if (nextHop) lines.push('ip route 0.0.0.0 0.0.0.0 ' + nextHop);
+      } else {
+        const dest = val('rtDest');
+        const mask = cidrToMask(val('rtMaskSel'));
+        if (dest && isValidIp(dest) && nextHop) lines.push('ip route ' + dest + ' ' + mask + ' ' + nextHop);
+      }
+
+      return lines.join('\n');
+    }
+
+    function genOspf() {
+      const pid = val('ospfProcessId');
+      if (!pid) return '';
+      const lines = ['router ospf ' + pid];
+      const rid = val('ospfRouterId');
+      if (rid) lines.push(' router-id ' + rid);
+
+      document.querySelectorAll('#ospfBody tr').forEach(tr => {
+        const net = tr.querySelector('.ospf-net').value.trim();
+        const prefix = tr.querySelector('.ospf-prefix').value;
+        const area = tr.querySelector('.ospf-area').value.trim() || '0';
+        if (net && isValidIp(net)) lines.push(' network ' + net + ' ' + cidrToWildcard(prefix) + ' area ' + area);
+      });
+
+      if (checked('ospfPassiveDefault')) {
+        lines.push(' passive-interface default');
+        val('ospfActiveIfaces').split(',').map(s => s.trim()).filter(Boolean).forEach(i => lines.push(' no passive-interface ' + i));
+      }
+
+      lines.push('exit');
+
+      const tuneIface = val('ospfTuneIface');
+      const priority = val('ospfPriority');
+      const cost = val('ospfCost');
+      if (tuneIface && (priority || cost)) {
+        lines.push('interface ' + tuneIface);
+        if (priority) lines.push(' ip ospf priority ' + priority);
+        if (cost) lines.push(' ip ospf cost ' + cost);
+        lines.push('exit');
+      }
+
+      return lines.join('\n');
+    }
+
+    function genFhrp() {
+      const iface = val('fhrpIface');
+      const group = val('fhrpGroup');
+      const vip = val('fhrpVip');
+      if (!iface || !group || !vip) return '';
+      const keyword = val('fhrpProto');
+      const prio = val('fhrpPriority');
+      const lines = ['interface ' + iface];
+      lines.push(' ' + keyword + ' ' + group + ' ip ' + vip);
+      if (prio) lines.push(' ' + keyword + ' ' + group + ' priority ' + prio);
+      if (checked('fhrpPreempt')) lines.push(' ' + keyword + ' ' + group + ' preempt');
+      lines.push('exit');
+      return lines.join('\n');
+    }
+
+    function genDhcp() {
+      const name = val('dhcpName');
+      const net = val('dhcpNet');
+      const mask = cidrToMask(val('dhcpMaskSel'));
+      const gw = val('dhcpGw');
+      const dns = val('dhcpDns');
+      const exStart = val('dhcpExcludeStart');
+      const exEnd = val('dhcpExcludeEnd');
+      const lines = [];
+
+      if (exStart && isValidIp(exStart)) {
+        lines.push('ip dhcp excluded-address ' + exStart + (exEnd && isValidIp(exEnd) ? ' ' + exEnd : ''));
+      }
+
+      if (name) {
+        lines.push('ip dhcp pool ' + name);
+        if (net && isValidIp(net)) lines.push(' network ' + net + ' ' + mask);
+        if (gw && isValidIp(gw)) lines.push(' default-router ' + gw);
+        if (dns) lines.push(' dns-server ' + dns.split(',').map(s => s.trim()).filter(Boolean).join(' '));
+        lines.push('exit');
+      }
+
+      const relayIface = val('dhcpRelayIface');
+      const relayServer = val('dhcpRelayServer');
+      if (relayIface && relayServer && isValidIp(relayServer)) {
+        lines.push('interface ' + relayIface);
+        lines.push(' ip helper-address ' + relayServer);
+        lines.push('exit');
+      }
+
+      return lines.join('\n');
+    }
+
+    function genAcl() {
+      const type = val('aclType');
+      const idName = val('aclId');
+      if (!idName) return '';
+      const lines = [];
+
+      document.querySelectorAll('#aclBody tr').forEach(tr => {
+        const action = tr.querySelector('.acl-action').value;
+        const proto = tr.querySelector('.acl-proto').value;
+        const src = tr.querySelector('.acl-src').value.trim();
+        const srcPrefix = tr.querySelector('.acl-src-mask').value;
+        const dst = tr.querySelector('.acl-dst').value.trim();
+        const dstPrefix = tr.querySelector('.acl-dst-mask').value;
+        const port = tr.querySelector('.acl-port').value.trim();
+        if (!src) return;
+
+        const srcPart = src.toLowerCase() === 'any' ? 'any' : (src + ' ' + cidrToWildcard(srcPrefix));
+
+        if (type === 'standard') {
+          lines.push('access-list ' + idName + ' ' + action + ' ' + srcPart);
+        } else {
+          const dstPart = (!dst || dst.toLowerCase() === 'any') ? 'any' : (dst + ' ' + cidrToWildcard(dstPrefix));
+          let line = 'access-list ' + idName + ' ' + action + ' ' + proto + ' ' + srcPart + ' ' + dstPart;
+          if (port && (proto === 'tcp' || proto === 'udp')) line += ' eq ' + port;
+          lines.push(line);
+        }
+      });
+
+      const applyIface = val('aclApplyIface');
+      if (applyIface) {
+        lines.push('interface ' + applyIface);
+        lines.push(' ip access-group ' + idName + ' ' + val('aclApplyDir'));
+        lines.push('exit');
+      }
+
+      return lines.join('\n');
+    }
+
+    function genNat() {
+      const insideIfaces = val('natInsideIfaces').split(',').map(s => s.trim()).filter(Boolean);
+      const outsideIface = val('natOutsideIface');
+      const type = val('natType');
+      const lines = [];
+
+      insideIfaces.forEach(i => { lines.push('interface ' + i); lines.push(' ip nat inside'); lines.push('exit'); });
+      if (outsideIface) { lines.push('interface ' + outsideIface); lines.push(' ip nat outside'); lines.push('exit'); }
+
+      if (type === 'pat') {
+        const acl = val('natAcl');
+        if (acl && outsideIface) lines.push('ip nat inside source list ' + acl + ' interface ' + outsideIface + ' overload');
+      } else {
+        const local = val('natLocal');
+        const global = val('natGlobal');
+        if (local && global) lines.push('ip nat inside source static ' + local + ' ' + global);
+      }
+
+      return lines.join('\n');
+    }
+
+    function genSshAaa() {
+      const domain = val('secDomain');
+      const enSecret = val('secEnable');
+      const user = val('secUser');
+      const pass = val('secPass');
+      if (!domain && !enSecret && !user) return '';
+
+      const lines = [];
+      if (domain) {
+        lines.push('ip domain-name ' + domain);
+        lines.push('crypto key generate rsa modulus 1024');
+      }
+      if (enSecret) lines.push('enable secret ' + enSecret);
+      if (user && pass) lines.push('username ' + user + ' privilege 15 secret ' + pass);
+
+      lines.push('line vty 0 4');
+      if (user) lines.push(' login local');
+      if (checked('secSshOnly')) lines.push(' transport input ssh');
+      lines.push('exit');
+      return lines.join('\n');
+    }
+
+    /* ---------- összefoglaló frissítés ---------- */
+
+    function updateAll() {
+      ['ifIp', 'swGateway', 'rtDest', 'rtNextHop', 'dhcpNet', 'dhcpGw', 'dhcpExcludeStart', 'dhcpExcludeEnd', 'dhcpRelayServer', 'fhrpVip', 'natLocal', 'natGlobal']
+        .forEach(markValidity);
+
+      const iface = genIface();
+      const switchport = genSwitchport();
+      const etherchannel = genEtherchannel();
+      const stp = genStp();
+      const route = genRoute();
+      const ospf = genOspf();
+      const fhrp = genFhrp();
+      const dhcp = genDhcp();
+      const acl = genAcl();
+      const nat = genNat();
+      const sec = genSshAaa();
+
+      document.getElementById('out-iface').value = iface;
+      document.getElementById('out-switchport').value = switchport;
+      document.getElementById('out-etherchannel').value = etherchannel;
+      document.getElementById('out-stp').value = stp;
+      document.getElementById('out-route').value = route;
+      document.getElementById('out-ospf').value = ospf;
+      document.getElementById('out-fhrp').value = fhrp;
+      document.getElementById('out-dhcp').value = dhcp;
+      document.getElementById('out-acl').value = acl;
+      document.getElementById('out-nat').value = nat;
+      document.getElementById('out-sec').value = sec;
+
+      // egy L2 switchnek nincs routing képessége (OSPF, FHRP, NAT, DHCP pool, ip route),
+      // egy sima routernek pedig nincs switchportja (VLAN, trunk/access, EtherChannel, STP,
+      // port security) – ezek csak a hozzájuk illő eszköztípusnál kerülnek az összesítésbe
+      const deviceType = val('deviceType');
+      const switchCapable = deviceType !== 'router';
+      const routerCapable = deviceType !== 'switch';
+
+      const hostname = val('hostname');
+      const blocks = ['enable', 'configure terminal'];
+      if (hostname) blocks.push('hostname ' + hostname);
+      if (iface) blocks.push('! --- Interfész konfiguráció ---\n' + iface);
+      if (switchport && switchCapable) blocks.push('! --- Switchport / VLAN ---\n' + switchport);
+      if (etherchannel && switchCapable) blocks.push('! --- EtherChannel ---\n' + etherchannel);
+      if (stp && switchCapable) blocks.push('! --- STP ---\n' + stp);
+      if (route) blocks.push('! --- Átjáró / útvonal ---\n' + route);
+      if (ospf && routerCapable) blocks.push('! --- OSPF ---\n' + ospf);
+      if (fhrp && routerCapable) blocks.push('! --- FHRP ---\n' + fhrp);
+      if (dhcp && routerCapable) blocks.push('! --- DHCP pool ---\n' + dhcp);
+      if (acl) blocks.push('! --- ACL ---\n' + acl);
+      if (nat && routerCapable) blocks.push('! --- NAT ---\n' + nat);
+      if (sec) blocks.push('! --- SSH / AAA ---\n' + sec);
+      blocks.push('end');
+      if (checked('wrMem')) blocks.push('write memory');
+
+      document.getElementById('combined-output').value = blocks.join('\n');
+    }
+
+    /* ---------- másolás ---------- */
+
+    function copyFrom(id, btn) {
+      const ta = document.getElementById(id);
+      if (!ta.value.trim()) return;
+      const original = btn.textContent;
+      const done = () => { btn.textContent = 'Másolva ✓'; setTimeout(() => { btn.textContent = original; }, 1400); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(ta.value).then(done).catch(() => fallbackCopy(ta, done));
+      } else {
+        fallbackCopy(ta, done);
+      }
+    }
+
+    function fallbackCopy(ta, cb) {
+      ta.removeAttribute('readonly');
+      ta.select();
+      try { document.execCommand('copy'); cb && cb(); } catch (e) {}
+      ta.setAttribute('readonly', 'readonly');
+    }
+
+    /* ---------- megjelenítés váltók ---------- */
+
+    function toggleDeviceType() {
+      const type = val('deviceType');
+      document.getElementById('routeFieldsSwitch').classList.toggle('hidden', type !== 'switch');
+      document.getElementById('routeFieldsRouter').classList.toggle('hidden', type === 'switch');
+      updateAll();
+    }
+
+    function toggleSwitchMode() {
+      const mode = val('spMode');
+      document.getElementById('spAccessFields').classList.toggle('hidden', mode !== 'access');
+      document.getElementById('spTrunkFields').classList.toggle('hidden', mode !== 'trunk');
+      updateAll();
+    }
+
+    function togglePortSecurity() {
+      document.getElementById('spPortSecurityFields').classList.toggle('hidden', !checked('spPortSecurity'));
+      updateAll();
+    }
+
+    function toggleIfSub() {
+      document.getElementById('ifSubFields').classList.toggle('hidden', !val('ifName').includes('.'));
+      updateAll();
+    }
+
+    function toggleStpRole() {
+      document.getElementById('stpPriorityField').classList.toggle('hidden', val('stpRole') !== 'priority');
+      updateAll();
+    }
+
+    function toggleDefaultRoute() {
+      document.getElementById('rtDestFields').classList.toggle('hidden', checked('rtDefault'));
+      updateAll();
+    }
+
+    function togglePoMode() {
+      const mode = val('poSwitchMode');
+      document.getElementById('poAccessFields').classList.toggle('hidden', mode !== 'access');
+      document.getElementById('poTrunkFields').classList.toggle('hidden', mode !== 'trunk');
+      updateAll();
+    }
+
+    function toggleNatType() {
+      const type = val('natType');
+      document.getElementById('natPatFields').classList.toggle('hidden', type !== 'pat');
+      document.getElementById('natStaticFields').classList.toggle('hidden', type !== 'static');
+      updateAll();
+    }
+
+    /* ---------- inicializálás ---------- */
+
+    document.addEventListener('DOMContentLoaded', () => {
+      buildMaskOptions(document.getElementById('ifMaskSel'), 1, 32, 24);
+      buildMaskOptions(document.getElementById('rtMaskSel'), 1, 32, 24);
+      buildMaskOptions(document.getElementById('dhcpMaskSel'), 1, 30, 24);
+      buildMaskOptions(document.getElementById('vlsmBasePrefix'), 1, 30, 24);
+
+      document.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('input', updateAll);
+        el.addEventListener('change', updateAll);
+      });
+
+      document.getElementById('deviceType').addEventListener('change', toggleDeviceType);
+      document.getElementById('spMode').addEventListener('change', toggleSwitchMode);
+      document.getElementById('rtDefault').addEventListener('change', toggleDefaultRoute);
+      document.getElementById('poSwitchMode').addEventListener('change', togglePoMode);
+      document.getElementById('natType').addEventListener('change', toggleNatType);
+      document.getElementById('spPortSecurity').addEventListener('change', togglePortSecurity);
+      document.getElementById('ifName').addEventListener('input', toggleIfSub);
+      document.getElementById('stpRole').addEventListener('change', toggleStpRole);
+
+      document.getElementById('vlsmBase').addEventListener('input', recalcVlsm);
+      document.getElementById('vlsmBasePrefix').addEventListener('change', recalcVlsm);
+      document.getElementById('vlsmAddRow').addEventListener('click', () => addVlsmRow('', ''));
+      document.getElementById('vlsmBody').addEventListener('input', e => {
+        if (e.target.classList.contains('vlsm-hosts') || e.target.classList.contains('vlsm-name') || e.target.classList.contains('vlsm-index')) recalcVlsm();
+      });
+      document.getElementById('vlsmBody').addEventListener('click', e => {
+        const btn = e.target.closest('button[data-act]');
+        if (!btn) return;
+        const tr = btn.closest('tr');
+        const act = btn.dataset.act;
+        if (act === 'del') { tr.remove(); recalcVlsm(); }
+        else if (act === 'if' && tr.dataset.selected) {
+          document.getElementById('ifIp').value = tr.dataset.selected;
+          document.getElementById('ifMaskSel').value = tr.dataset.prefix;
+          updateAll();
+        } else if (act === 'dhcp' && tr.dataset.network) {
+          document.getElementById('dhcpNet').value = tr.dataset.network;
+          document.getElementById('dhcpMaskSel').value = String(Math.min(30, Number(tr.dataset.prefix)));
+          document.getElementById('dhcpGw').value = tr.dataset.first;
+          const nameVal = tr.querySelector('.vlsm-name').value.trim();
+          if (nameVal) document.getElementById('dhcpName').value = nameVal.toUpperCase().replace(/\s+/g, '_') + '_POOL';
+          updateAll();
+        }
+      });
+
+      document.getElementById('ospfAddRow').addEventListener('click', () => addOspfRow('', 24, '0'));
+      document.getElementById('ospfParseRoute').addEventListener('click', parseOspfConnected);
+      document.getElementById('ospfBody').addEventListener('input', updateAll);
+      document.getElementById('ospfBody').addEventListener('change', updateAll);
+      document.getElementById('ospfBody').addEventListener('click', e => {
+        const btn = e.target.closest('button[data-act="del"]');
+        if (btn) { btn.closest('tr').remove(); updateAll(); }
+      });
+
+      document.getElementById('aclAddRow').addEventListener('click', () => addAclRow({}));
+      document.getElementById('aclBody').addEventListener('input', updateAll);
+      document.getElementById('aclBody').addEventListener('change', updateAll);
+      document.getElementById('aclBody').addEventListener('click', e => {
+        const btn = e.target.closest('button[data-act="del"]');
+        if (btn) { btn.closest('tr').remove(); updateAll(); }
+      });
+
+      addVlsmRow('Admin', 50);
+      addVlsmRow('User', 100);
+      addVlsmRow('Guest', 20);
+      addOspfRow('', 24, '0');
+      addAclRow({ action: 'permit', proto: 'ip', src: '192.168.10.0', srcPrefix: 24, dst: 'any' });
+
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        document.querySelectorAll('input[type="text"], input[type="number"]').forEach(el => el.value = '');
+        document.getElementById('ospfRouteText').value = '';
+        document.getElementById('ifNoShut').checked = true;
+        document.getElementById('rtDefault').checked = false;
+        document.getElementById('wrMem').checked = false;
+        document.getElementById('ospfPassiveDefault').checked = false;
+        document.getElementById('fhrpPreempt').checked = false;
+        document.getElementById('secSshOnly').checked = true;
+        document.getElementById('spPortSecurity').checked = false;
+        document.getElementById('spPsSticky').checked = true;
+        document.getElementById('stpPortfast').checked = false;
+        document.getElementById('stpBpduGuard').checked = false;
+        document.getElementById('deviceType').value = 'router';
+        document.getElementById('spMode').value = 'access';
+        document.getElementById('spPsViolation').value = 'shutdown';
+        document.getElementById('poMode').value = 'active';
+        document.getElementById('poSwitchMode').value = 'access';
+        document.getElementById('fhrpProto').value = 'standby';
+        document.getElementById('aclType').value = 'standard';
+        document.getElementById('aclApplyDir').value = 'in';
+        document.getElementById('natType').value = 'pat';
+        document.getElementById('stpMode').value = '';
+        document.getElementById('stpRole').value = '';
+        document.getElementById('ifMaskSel').value = '24';
+        document.getElementById('rtMaskSel').value = '24';
+        document.getElementById('dhcpMaskSel').value = '24';
+        document.getElementById('vlsmBasePrefix').value = '24';
+        document.querySelectorAll('input.invalid').forEach(el => el.classList.remove('invalid'));
+        toggleDeviceType();
+        toggleSwitchMode();
+        toggleDefaultRoute();
+        togglePoMode();
+        toggleNatType();
+        togglePortSecurity();
+        toggleIfSub();
+        toggleStpRole();
+        recalcVlsm();
+      });
+
+      toggleDeviceType();
+      toggleSwitchMode();
+      toggleDefaultRoute();
+      togglePoMode();
+      toggleNatType();
+      togglePortSecurity();
+      toggleIfSub();
+      toggleStpRole();
+      updateAll();
+    });
+  </script>
+</body>
+</html>
